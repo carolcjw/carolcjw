@@ -1,0 +1,63 @@
+def main(): 
+    '''
+    --------------------------
+    1. while loop: print out function menu and prompt for user's input
+    2. If input is not in available selection range: display menu and prompt for input again
+    3. If input is in available selection range: call for the respective function
+    --------------------------
+    '''
+    
+    import os
+    import scanToken
+    import setTokenProfile
+    import MergeInputOutputFiles
+    import overtime
+    import absentReport
+    import quitOption
+    
+    homeDirectory = os.getcwd()
+    
+    while True:
+            
+        #To ensure that user is brought back to home directory each time user returns to menu
+        os.chdir(homeDirectory)
+      
+        options = '''
+        ***** Factory Attendance *****
+        S: Scan Token
+        T: Set Token Profile
+        M: Merge Input/ Output
+        O: Over Time Report
+        A: Absent Report
+        Q: Quit 
+        '''
+        print(options)
+        choice = input("Which task would you like to perform? ").strip().upper()
+    
+        # use while loop to prompt valid input
+        while choice not in ["S","T","M","O","A","Q"]:
+            print("Invalid input, please choose again")
+            print(options)
+            choice = input("Which task would you like to perform? ").strip().upper() # non-case sensitive
+        
+        # call respective function
+        else: 
+            if choice == "S":
+                scanToken.scanToken()
+            elif choice == "T":
+                setTokenProfile.setTokenProfile()
+            elif choice == "M":
+                MergeInputOutputFiles.mergeInputOutputFiles()
+            elif choice == "O":
+                overtime.overtime()
+            elif choice == "A":
+                absentReport.absentReport()
+            else:
+                if quitOption.quitOption() == "Q":
+                    break
+                else:
+                    pass
+
+
+if __name__ == "__main__":
+    main()
