@@ -1,3 +1,9 @@
+import pandas as pd
+employee_df = pd.read_csv('employees.csv')
+employee_df.set_index('EmployeeID', inplace=True)
+
+
+_____________________________________________________________________________________________________
 def main(): 
     '''
     --------------------------
@@ -61,3 +67,174 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+
+_________________________________________________________________________________________________________________
+import pandas as pd
+from numpy import nan as NaN
+
+def scanToken():
+    
+    import time
+    import csv
+    import os
+    
+    YYYYMMDD = time.strftime("%Y%m%d")
+    current_hour = time.strftime("%H")
+    
+     
+    while True:
+        
+      tokenID = input('Enter your token ID (or enter "Q" to quit): ') # Scan QR code and input token ID
+      
+      if tokenID == "Q":   # End the loop if enter "Q"
+          break
+      
+      elif int(current_hour) < 13:  # if the time that scanning is captured is before 1 pm
+        f_in = f'IN_[{YYYYMMDD}].csv'
+        if os.path.isfile(f_in):    #if file already exists
+            with open(f_in, "a+", newline ='') as file_in:
+                  writer = csv.writer(file_in)
+                  writer.writerow([time.strftime("%Y-%m-%d"),time.strftime("%H:%M"),tokenID])
+        else:
+            with open(f_in, "a+", newline ='') as file_in:   #if file does not exist yet
+                  writer = csv.writer(file_in)
+                  writer.writerow(['Date','Time','Token ID'])
+                  writer.writerow([time.strftime("%Y-%m-%d"),time.strftime("%H:%M"),tokenID])
+                  
+    
+      elif int(current_hour) >= 13:  # if the time that scanning is captured is after 1 pm
+        f_out = f'OT_[{YYYYMMDD}].csv' 
+        if os.path.isfile(f_out):    #if file already exists
+            with open(f_out, "a+", newline ='') as file_out:
+                  writer = csv.writer(file_out)
+                  writer.writerow([time.strftime("%Y-%m-%d"),time.strftime("%H:%M"),tokenID])
+        else:
+            with open(f_out, "a+", newline ='') as file_out:   #if file does not exist yet
+                  writer = csv.writer(file_out)
+                  writer.writerow(['Date','Time','Token ID'])
+                  writer.writerow([time.strftime("%Y-%m-%d"),time.strftime("%H:%M"),tokenID])
+                        
+    
+if __name__ == "__main__":
+    scanToken()
+
+
+
+_________________________________________________________________________________________________________________
+def setTokenProfile():
+    
+    employee_id = input('Please enter the employee ID: ')
+    
+    if employee_id in employee_df.index:
+        name = employee_df.at[employee_id, 'Name']
+        mobile = employee_df.at[employee_id, 'MobileNumber']
+        email = employee_df.at[employee_id, 'EMail']
+        token = employee_df.at[employee_id, 'TokenID']
+        
+        print(f'Employee ID: {employee_id}\nName: {name}\nMobile number: {mobile}\nEmail: {email}\nToken ID: {token}')
+        
+        
+        while True:
+            resetToken = input('Do you want to reset your token? (Y/N): ').strip().upper()
+            if resetToken == 'Y':
+                token = input('Please enter the token: ')
+                employee_df.at[employee_id, 'TokenID'] = token  # update the TokenID
+                break
+            elif resetToken == 'N':
+                break
+            else:
+                print('Invalid input. Please enter your option again.')
+        print(f'Please check:\nEmployee ID: {employee_id}\nName: {name}\nMobile number: {mobile}\nEmail: {email}\nToken ID: {token}')
+
+    else:
+        # can ask if the user want to proceed (to enter the info of a new employee)
+        # Yes: next step
+        # No: use a loop to ask for another employee ID
+        name = input("Employee ID is not found in our records. Please register the employee's name: ")
+        mobile = input("Please enter the employee's mobile number: ")
+        email = input("Please enter the employee's email address: ")
+        token = NaN  # you have not assign a token ID yet 
+        employee_df.loc[employee_id] = [name, mobile, email, token] # add a new row to the dataframe
+        pass
+        check = input('Do you want to set token for another employee? (Y/N): ').strip().upper()
+        if check == 'Y':
+            setTokenProfile()
+    
+    employee_df.to_csv('employees.csv')
+
+if __name__ == "__main__":
+    setTokenProfile()
+
+
+_________________________________________________________________________________________________________________
+def absentReport():
+    '''
+    ----------
+    #1 Prompt the user to enter the date
+    #2 Validate date and input format (yyyymmdd) by using "datetime"
+            if input format is valid, continue to step3 
+            if not: prompt the user for input
+    #3 Check if there's csv file for the date
+            if file is available: read the file
+            if not available: prompt the user for input again
+       !!!!!!!!!!!! need to change to "INOUT" before submitting!!!!!!!!!!!!
+    #4 Use "TokenID" as the value to cross check for the absence
+    #5 create an empty dataframe, appened absent employee's value to it if there's any
+    #6 check if new created dataframe is empty or not: 
+            if empty, show the message of no absence
+            if not, print out the dataframe
+    -------
+    '''
+    import datetime
+    import pandas as pd
+    import os
+    import fileExtraction
+    
+    df = pd.read_csv("employees.csv")
+        
+    #To extract files from zipped folder into INOUT folder
+    fileExtraction.fileExtraction()
+    
+    files = os.listdir()
+    sortedFiles = sorted(files, reverse = False)
+    
+    #To list all the Year+Month+Date available in the file records
+    fileDate = []
+    for i in sortedFiles:
+        if i[3:11] not in fileDate:
+            fileDate.append(i[3:11])
+    
+    absent_date = input("Which date would you like to check for absence? Please enter in YYYYMMDD format.) ").strip() # remove whitespace in the front & tail
+    
+    # use while loop to get the valid input and available csv file
+    while True:
+        try:
+            datetime.datetime.strptime(absent_date, '%Y%m%d') # ensure input follow desired date format
+            if absent_date in fileDate:
+                df_signin = pd.read_csv("IN_" + absent_date + ".csv")
+                break
+            else:
+                absent_date = input("There's no record for this date, please enter another date: ")
+        except ValueError:
+            absent_date = input("Invalid data format, please enter in YYYYMMDD: ")
+    
+    
+    employee_list = df["TokenID"].values # store TokenID's value into a list
+    df_absent = pd.DataFrame() # create a empty dataframe to be appended if there's absencce
+    
+    for each in employee_list: 
+        if each not in df_signin["Token ID"].values:
+            df_absent = df_absent.append(df.loc[df["TokenID"] == each,["EmployeeID","Name"]])
+    
+    if df_absent.empty:
+        print("\nNo one is absent on this date!")
+    else:
+        print("\nTabulating list of absentees...")
+
+    df_absent.to_csv(f"absent_{absent_date}.csv", encoding = "utf-8", index = False)
+    
+    print(f"\nAbsent Report successfully generated. Please check in your directory: {os.getcwd()}")
+
+if __name__ == "__main__":
+    absentReport()
